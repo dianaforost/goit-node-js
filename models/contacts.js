@@ -37,7 +37,25 @@ const removeContact = async (contactId) => {
   }
 }
 
-const addContact = async (body) => {}
+const addContact = async (body) => {
+  try{
+    const {name, email, phone} = body;
+    console.log(name, email, phone);
+    if (name && email && phone) {
+      const result = JSON.parse(await fs.readFile(contactsPath, "utf-8"))
+      const newContact = {id: Date.now().toString(), name, email, phone}
+      result.push(newContact)
+      const write = fs.writeFile(contactsPath, JSON.stringify(result), "utf-8");
+      console.log(JSON.stringify(result), write);
+      return { status: 200, result };
+    } else{
+      return { status: 400, message: "missing required name field" };
+    }
+  }
+  catch(e){
+    console.log(e);
+  }
+}
 
 const updateContact = async (contactId, body) => {}
 
