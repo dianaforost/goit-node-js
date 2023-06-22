@@ -2,6 +2,19 @@ const express = require('express');
 
 const router = express.Router();
 
+const Joi = require('joi');
+
+const contactPostSchema = Joi.object({
+  name: Joi.string().required(),
+  email: Joi.string().email().required(),
+  phone: Joi.string().required(),
+});
+const contactPutSchema = Joi.object({
+  name: Joi.string(),
+  email: Joi.string().email(),
+  phone: Joi.string(),
+});
+
 const models = require('../../models/contacts');
 router.get('/', async (req, res, next) => {
   try {
@@ -26,12 +39,16 @@ router.get('/:contactId', async (req, res, next) => {
     }
   } catch (e) {
     console.log(e);
-    res.status(500).json({ message: 'template message' });
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
 router.post('/', async (req, res, next) => {
   try {
+    const { error } = contactPostSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
+    }
     const body = req.body;
     console.log(req.body);
     const result = await models.addContact(body);
@@ -39,7 +56,7 @@ router.post('/', async (req, res, next) => {
     res.status(result.status).json(result.result);
   } catch (e) {
     console.log(e);
-    res.json({ message: 'template message' });
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
@@ -55,16 +72,18 @@ router.delete('/:contactId', async (req, res, next) => {
     }
   } catch (e) {
     console.log(e);
-    res.status(500).json({ message: 'template message' });
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
 router.put('/:contactId', async (req, res, next) => {
   try {
-    console.log(req.params);
     const body = req.body;
     const { contactId } = req.params;
-    console.log(body);
+    const { error } = contactPutSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
+    }
     const result = await models.updateContact(contactId, body);
     if (result.status === 200) {
       res.status(200).json(result.contact);
@@ -75,7 +94,7 @@ router.put('/:contactId', async (req, res, next) => {
     }
   } catch (e) {
     console.log(e);
-    res.status(500).json({ message: 'template message' });
+    res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
