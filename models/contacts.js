@@ -1,16 +1,43 @@
 const fs = require('fs/promises');
 const path = require('path');
 const contactsPath = path.join(__dirname, 'contacts.json');
+const mongoose = require('mongoose');
+const DB_HOST =
+  'mongodb+srv://dianaforost:Chokolate2005@cluster0.veict56.mongodb.net/db-contacts?retryWrites=true&w=majority';
+mongoose
+  .connect(DB_HOST)
+  .then(() => console.log('Database connection successful'))
+  .catch((error) => {
+    console.error('Database connection error:', error);
+    process.exit(1);
+  });
+const contactSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: [true, 'Set name for contact'],
+  },
+  email: {
+    type: String,
+  },
+  phone: {
+    type: String,
+  },
+  favorite: {
+    type: Boolean,
+    default: false,
+  },
+});
+
+const Contact = mongoose.model('Contact', contactSchema);
 const listContacts = async () => {
   try {
     const result = await fs.readFile(contactsPath, 'utf-8');
-    // console.log(result);
+    console.log(result);
     return result;
-  } catch (e) {
-    console.log(e);
+  } catch (error) {
+    console.error(error);
   }
 };
-
 const getContactById = async (contactId) => {
   try {
     const result = JSON.parse(await fs.readFile(contactsPath, 'utf-8'));
@@ -96,4 +123,5 @@ module.exports = {
   removeContact,
   addContact,
   updateContact,
+  Contact,
 };
