@@ -1,6 +1,3 @@
-const fs = require('fs/promises');
-const path = require('path');
-const contactsPath = path.join(__dirname, 'contacts.json');
 const mongoose = require('mongoose');
 const { Types } = require('mongoose');
 const DB_HOST =
@@ -12,22 +9,25 @@ mongoose
     console.error('Database connection error:', error);
     process.exit(1);
   });
-const contactSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: [true, 'Set name for contact'],
+const contactSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, 'Set name for contact'],
+    },
+    email: {
+      type: String,
+    },
+    phone: {
+      type: String,
+    },
+    favorite: {
+      type: Boolean,
+      default: false,
+    },
   },
-  email: {
-    type: String,
-  },
-  phone: {
-    type: String,
-  },
-  favorite: {
-    type: Boolean,
-    default: false,
-  },
-});
+  { versionKey: false }
+);
 
 const Contact = mongoose.model('Contact', contactSchema);
 const listContacts = async () => {
@@ -91,9 +91,9 @@ const addContact = async (body) => {
 
 const updateContact = async (contactId, body) => {
   try {
-    const { name, email, phone } = body;
-    if (name || email || phone) {
-      const result = JSON.parse(await fs.readFile(contactsPath, 'utf-8'));
+    const { name, email, phone, favorite } = body;
+    if (name || email || phone || favorite) {
+      const result = await Contact.find();
       const contact = result.findIndex((c) => c.id === contactId);
 
       if (contact !== -1) {
@@ -106,8 +106,15 @@ const updateContact = async (contactId, body) => {
         if (phone) {
           result[contact].phone = phone;
         }
+        if (favorite) {
+          result[contact].favorite = favorite;
+        }
 
-        await fs.writeFile(contactsPath, JSON.stringify(result), 'utf-8');
+        await Contact.updateOne(
+          { _id: contactId },
+          { name, email, phone, favorite },
+          { upsert: false }
+        );
 
         return { status: 200, contact: result[contact] };
       } else {
