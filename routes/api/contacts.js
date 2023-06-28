@@ -87,5 +87,25 @@ router.put('/:contactId', async (req, res, next) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
-
+router.patch('/:contactId/favorite', async (req, res, next) => {
+  try {
+    const body = req.body;
+    const { contactId } = req.params;
+    const { error } = schemas.contactPatchSchema.validate(req.body);
+    if (error) {
+      return res.status(400).json({ message: error.details[0].message });
+    }
+    const result = await models.updateStatusContact(contactId, body);
+    if (result.status === 200) {
+      res.status(200).json(result.contact);
+    } else if (result.status === 404) {
+      res.status(404).json({ message: result.message });
+    } else {
+      res.status(400).json({ message: result.message });
+    }
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
 module.exports = router;

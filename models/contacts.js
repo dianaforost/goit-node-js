@@ -54,7 +54,6 @@ const removeContact = async (contactId) => {
   try {
     const result = await Contact.find();
     const contacts = result.filter((c) => c.id !== contactId);
-    // const write = await Contact.remove({ _id: contactId });
     const write = await Contact.deleteOne({ _id: contactId });
     console.log(contacts, write);
     return contacts;
@@ -91,8 +90,8 @@ const addContact = async (body) => {
 
 const updateContact = async (contactId, body) => {
   try {
-    const { name, email, phone, favorite } = body;
-    if (name || email || phone || favorite) {
+    const { name, email, phone } = body;
+    if (name || email || phone) {
       const result = await Contact.find();
       const contact = result.findIndex((c) => c.id === contactId);
 
@@ -106,13 +105,10 @@ const updateContact = async (contactId, body) => {
         if (phone) {
           result[contact].phone = phone;
         }
-        if (favorite) {
-          result[contact].favorite = favorite;
-        }
 
         await Contact.updateOne(
           { _id: contactId },
-          { name, email, phone, favorite },
+          { name, email, phone },
           { upsert: false }
         );
 
@@ -127,12 +123,37 @@ const updateContact = async (contactId, body) => {
     console.log(e);
   }
 };
+const updateStatusContact = async (contactId, body) => {
+  const { favorite } = body;
+  try {
+    if (favorite) {
+      const result = await Contact.find();
+      const contact = result.findIndex((c) => c.id === contactId);
+      if (contact !== -1) {
+        result[contact].favorite = favorite;
+      } else {
+        return { status: 404, message: 'Not found' };
+      }
+      await Contact.updateOne(
+        { _id: contactId },
+        { favorite },
+        { upsert: false }
+      );
 
+      return { status: 200, contact: result[contact] };
+    } else {
+      return { status: 400, message: 'missing field favorite' };
+    }
+  } catch (e) {
+    console.log(e);
+  }
+};
 module.exports = {
   listContacts,
   getContactById,
   removeContact,
   addContact,
   updateContact,
+  updateStatusContact,
   Contact,
 };

@@ -11,4 +11,7 @@ const contactPutSchema = Joi.object({
   email: Joi.string().email(),
   phone: Joi.string(),
 });
-module.exports = { contactPostSchema, contactPutSchema };
+const contactPatchSchema = Joi.object({
+  favorite: Joi.boolean().required(),
+});
+module.exports = { contactPostSchema, contactPutSchema, contactPatchSchema };
