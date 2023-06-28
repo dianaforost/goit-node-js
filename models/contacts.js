@@ -31,16 +31,15 @@ const contactSchema = new mongoose.Schema({
 const Contact = mongoose.model('Contact', contactSchema);
 const listContacts = async () => {
   try {
-    const result = await fs.readFile(contactsPath, 'utf-8');
-    console.log(result);
-    return result;
+    const contacts = await Contact.find();
+    return JSON.stringify(contacts);
   } catch (error) {
     console.error(error);
   }
 };
 const getContactById = async (contactId) => {
   try {
-    const result = JSON.parse(await fs.readFile(contactsPath, 'utf-8'));
+    const result = await Contact.find();
     const contact = result.filter((c) => c.id === contactId);
     console.log(contactId);
     console.log(contact);
