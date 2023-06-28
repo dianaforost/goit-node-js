@@ -2,6 +2,7 @@ const fs = require('fs/promises');
 const path = require('path');
 const contactsPath = path.join(__dirname, 'contacts.json');
 const mongoose = require('mongoose');
+const { Types } = require('mongoose');
 const DB_HOST =
   'mongodb+srv://dianaforost:Chokolate2005@cluster0.veict56.mongodb.net/db-contacts?retryWrites=true&w=majority';
 mongoose
@@ -64,14 +65,21 @@ const removeContact = async (contactId) => {
 
 const addContact = async (body) => {
   try {
-    const { name, email, phone } = body;
+    const { name, email, phone, favorite } = body;
     console.log(name, email, phone);
     if (name && email && phone) {
-      const result = JSON.parse(await fs.readFile(contactsPath, 'utf-8'));
-      const newContact = { id: Date.now().toString(), name, email, phone };
-      result.push(newContact);
-      await fs.writeFile(contactsPath, JSON.stringify(result), 'utf-8');
+      const result = await Contact.find();
+      const newContact = {
+        _id: new Types.ObjectId(),
+        name,
+        email,
+        phone,
+        favorite,
+      };
       console.log(JSON.stringify(result));
+      const write = await Contact.create(newContact);
+      console.log(write);
+      result.push(newContact);
       return { status: 200, result };
     } else {
       return { status: 400, message: 'missing required name field' };
