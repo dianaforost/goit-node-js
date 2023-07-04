@@ -33,10 +33,6 @@ const registerUser = async (body) => {
   try {
     const { email, password } = body;
     console.log(email, password);
-    // const user = await User.findOne({ email });
-    // if (user) {
-    //   return { status: 409, message: 'Email in use' };
-    // }
     if (email && password) {
       const result = await User.findOne({ email });
       if (result) {
