@@ -4,7 +4,7 @@ const router = express.Router();
 
 const schemas = require('../../schemas/joi');
 
-const models = require('../../models/contacts');
+const models = require('../../controller/contacts');
 router.get('/', async (req, res, next) => {
   try {
     const contacts = JSON.parse(await models.listContacts());

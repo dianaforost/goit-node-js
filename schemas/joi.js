@@ -14,4 +14,13 @@ const contactPutSchema = Joi.object({
 const contactPatchSchema = Joi.object({
   favorite: Joi.boolean().required(),
 });
-module.exports = { contactPostSchema, contactPutSchema, contactPatchSchema };
+const userSchema = Joi.object({
+  email: Joi.string().email(),
+  password: Joi.string(),
+});
+module.exports = {
+  contactPostSchema,
+  contactPutSchema,
+  contactPatchSchema,
+  userSchema,
+};
