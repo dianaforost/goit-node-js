@@ -28,7 +28,13 @@ const usersSchema = new mongoose.Schema({
   },
   token: String,
 });
+usersSchema.methods.setPassword = function (password) {
+  this.password = bcryptjs.hashSync(password, bcryptjs.genSaltSync(6));
+};
 
+usersSchema.methods.validPassword = function (password) {
+  return bcryptjs.compareSync(password, this.password);
+};
 const User = mongoose.model('User', usersSchema);
 
 const registerUser = async (body) => {
@@ -40,13 +46,13 @@ const registerUser = async (body) => {
       if (result) {
         return { status: 409, message: 'Email in use' };
       }
-      const newContact = {
+      const newUser = new User({
         _id: new Types.ObjectId(),
         email,
-        password,
-      };
+      });
+      newUser.setPassword(password);
       console.log(JSON.stringify(result));
-      const write = await User.create(newContact);
+      const write = await User.create(newUser);
       console.log(write);
       return { status: 201, user: { email: email, password: password } };
     } else {
@@ -61,11 +67,9 @@ const loginUser = async (body) => {
     const { email, password } = body;
     if (email && password) {
       const result = await User.findOne({ email });
-      if (!result) {
+      if (!result || !result.validPassword(password)) {
         return { status: 401, message: 'Email or password is wrong' };
-      }
-      const passwordMatch = bcryptjs.compare(password, result.password);
-      if (passwordMatch) {
+      } else {
         const payload = {
           id: result.id,
           email: result.email,
@@ -76,8 +80,6 @@ const loginUser = async (body) => {
           token: token,
           user: { email: email, subscription: result.subscription },
         };
-      } else {
-        return { status: 401, message: 'Email or password is wrong' };
       }
     } else {
       return { status: 400, message: 'missing required name field' };

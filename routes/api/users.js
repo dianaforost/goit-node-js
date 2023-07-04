@@ -19,7 +19,9 @@ router.post('/register', async (req, res, next) => {
 
     res
       .status(result.status)
-      .json({ user: result.user } || { message: result.message });
+      .json(
+        result.message ? { message: result.message } : { user: result.user }
+      );
   } catch (e) {
     console.log(e);
     res.status(500).json({ message: 'Internal Server Error' });
@@ -36,11 +38,13 @@ router.post('/login', async (req, res, next) => {
     const result = await models.loginUser(body);
     console.log(result);
 
-    res.status(result.status).json(
-      { token: result.token, user: result.user } || {
-        message: result.message,
-      }
-    );
+    res
+      .status(result.status)
+      .json(
+        result.message
+          ? { message: result.message }
+          : { token: result.token, user: result.user }
+      );
   } catch (e) {
     console.log(e);
     res.status(500).json({ message: 'Internal Server Error' });
