@@ -73,8 +73,9 @@ const loginUser = async (body) => {
         const payload = {
           id: result.id,
           email: result.email,
+          password: result.password,
         };
-        const token = jwt.sign(payload, secret, { expiresIn: '1h' });
+        const token = jwt.sign(payload, secret, { expiresIn: '1d' });
         return {
           status: 200,
           token: token,
