@@ -71,4 +71,18 @@ router.post('/logout', auth, async (req, res, next) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+router.get('/current', auth, async (req, res, next) => {
+  try {
+    const result = await models.current(req);
+    res
+      .status(result.status)
+      .json(
+        result.message
+          ? { message: result.message }
+          : { token: result.token, user: result.user }
+      );
+  } catch (e) {
+    console.log(e);
+  }
+});
 module.exports = router;

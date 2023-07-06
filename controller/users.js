@@ -76,6 +76,7 @@ const loginUser = async (body) => {
           id: result.id,
           email: result.email,
           password: result.password,
+          subscription: result.subscription,
         };
         const token = jwt.sign(payload, secret, { expiresIn: '1w' });
         result.token = token;
@@ -111,9 +112,25 @@ const logOutUser = async (body, req) => {
     console.log(e);
   }
 };
+const current = async (req) => {
+  try {
+    const token = req.headers.authorization;
+    const verify = jwt.verify(token, secret);
+    if (!verify) {
+      return { status: 401, message: 'Not authorized' };
+    }
+    return {
+      status: 200,
+      user: { email: verify.email, subscription: verify.subscription },
+    };
+  } catch (e) {
+    console.log(e);
+  }
+};
 module.exports = {
   User,
   registerUser,
   loginUser,
   logOutUser,
+  current,
 };
