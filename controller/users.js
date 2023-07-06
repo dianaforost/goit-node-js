@@ -68,7 +68,7 @@ const loginUser = async (body) => {
     const { email, password } = body;
     if (email && password) {
       const result = await User.findOne({ email });
-      console.log(result, !result.validPassword(password));
+
       if (!result.validPassword(password)) {
         return { status: 401, message: 'Email or password is wrong' };
       } else {
@@ -78,6 +78,8 @@ const loginUser = async (body) => {
           password: result.password,
         };
         const token = jwt.sign(payload, secret, { expiresIn: '1w' });
+        result.token = token;
+        await result.save();
         return {
           status: 200,
           token: token,
@@ -91,8 +93,27 @@ const loginUser = async (body) => {
     console.log(e);
   }
 };
+const logOutUser = async (body, req) => {
+  try {
+    const verify = jwt.verify(req.headers.authorization, secret);
+    const id = verify.id;
+    if (id) {
+      const result = await User.findById(id);
+      if (!result) {
+        return { status: 401, message: 'Not authorized' };
+      }
+      result.token = null;
+
+      await result.save();
+      return { status: 204, message: 'Token deleted successfully' };
+    }
+  } catch (e) {
+    console.log(e);
+  }
+};
 module.exports = {
   User,
   registerUser,
   loginUser,
+  logOutUser,
 };
