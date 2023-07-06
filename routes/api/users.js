@@ -1,10 +1,11 @@
 const express = require('express');
 
 const router = express.Router();
-
+// const jwt = require('jsonwebtoken');
 const schemas = require('../../schemas/joi');
-
+// const { secret } = process.env;
 const models = require('../../controller/users');
+// const { auth } = require('../../middleware/auth');
 
 router.post('/register', async (req, res, next) => {
   try {
@@ -13,9 +14,7 @@ router.post('/register', async (req, res, next) => {
       return res.status(400).json({ message: error.details[0].message });
     }
     const body = req.body;
-    console.log(req.body);
     const result = await models.registerUser(body);
-    console.log(result);
 
     res
       .status(result.status)
@@ -34,9 +33,11 @@ router.post('/login', async (req, res, next) => {
       return res.status(400).json({ message: error.details[0].message });
     }
     const body = req.body;
-    console.log(req.body);
     const result = await models.loginUser(body);
-    console.log(result);
+    if (result.status === 200) {
+      console.log('hhh', result.token);
+      req.headers.authorization = `Bearer ${result.token}`;
+    }
 
     res
       .status(result.status)

@@ -29,18 +29,18 @@ const usersSchema = new mongoose.Schema({
   token: String,
 });
 usersSchema.methods.setPassword = function (password) {
-  this.password = bcryptjs.hashSync(password, bcryptjs.genSaltSync(6));
+  this.password = bcryptjs.hashSync(password, bcryptjs.genSaltSync(10));
 };
 
 usersSchema.methods.validPassword = function (password) {
-  return bcryptjs.compareSync(password, this.password);
+  const isPasswordValid = bcryptjs.compareSync(password, this.password);
+  return isPasswordValid;
 };
 const User = mongoose.model('User', usersSchema);
 
 const registerUser = async (body) => {
   try {
     const { email, password } = body;
-    console.log(email, password);
     if (email && password) {
       const result = await User.findOne({ email });
       if (result) {
@@ -51,9 +51,10 @@ const registerUser = async (body) => {
         email,
       });
       newUser.setPassword(password);
-      console.log(JSON.stringify(result));
+      await newUser.save();
       const write = await User.create(newUser);
-      console.log(write);
+      const writes = await newUser.save();
+      console.log(write, writes);
       return { status: 201, user: { email: email, password: password } };
     } else {
       return { status: 400, message: 'missing required name field' };
@@ -67,7 +68,8 @@ const loginUser = async (body) => {
     const { email, password } = body;
     if (email && password) {
       const result = await User.findOne({ email });
-      if (!result || !result.validPassword(password)) {
+      console.log(result, !result.validPassword(password));
+      if (!result.validPassword(password)) {
         return { status: 401, message: 'Email or password is wrong' };
       } else {
         const payload = {
@@ -75,7 +77,7 @@ const loginUser = async (body) => {
           email: result.email,
           password: result.password,
         };
-        const token = jwt.sign(payload, secret, { expiresIn: '1d' });
+        const token = jwt.sign(payload, secret, { expiresIn: '1w' });
         return {
           status: 200,
           token: token,
