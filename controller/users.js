@@ -127,10 +127,22 @@ const current = async (req) => {
     console.log(e);
   }
 };
+const patchSubscription = async (req) => {
+  const { subscription } = req.body;
+  const allowedSubscriptions = ['starter', 'pro', 'business'];
+  if (!allowedSubscriptions.includes(subscription)) {
+    return { status: 400, message: 'Invalid subscription value' };
+  }
+  const userId = req.user.id;
+  const result = await User.findByIdAndUpdate(userId, { subscription });
+  result.subscription = subscription;
+  return { status: 200, result: result };
+};
 module.exports = {
   User,
   registerUser,
   loginUser,
   logOutUser,
   current,
+  patchSubscription,
 };

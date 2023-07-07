@@ -85,4 +85,16 @@ router.get('/current', auth, async (req, res, next) => {
     console.log(e);
   }
 });
+router.patch('/', auth, async (req, res, next) => {
+  try {
+    const result = await models.patchSubscription(req);
+    res
+      .status(result.status)
+      .json(
+        result.message ? { message: result.message } : { result: result.result }
+      );
+  } catch (e) {
+    console.log(e);
+  }
+});
 module.exports = router;
