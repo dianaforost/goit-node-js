@@ -8,6 +8,13 @@ const models = require('../../controller/contacts');
 const { auth } = require('../../middleware/auth');
 router.get('/', auth, async (req, res, next) => {
   try {
+    const { page = 1, limit = 20 } = req.query;
+    if (page && limit) {
+      const result = await models.listContacts(Number(page), Number(limit));
+      return res
+        .status(200)
+        .json({ contacts: result.contacts, total: result.total });
+    }
     const contacts = await models.listContacts();
     const isFavourite = req.query.favorite;
     if (isFavourite === 'true') {

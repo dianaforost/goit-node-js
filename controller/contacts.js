@@ -35,8 +35,14 @@ const contactSchema = new mongoose.Schema(
 
 const Contact = mongoose.model('Contact', contactSchema);
 
-const listContacts = async () => {
+const listContacts = async (page, limit) => {
   try {
+    if (page && limit) {
+      const skip = (page - 1) * limit;
+      const contacts = await Contact.find().skip(skip).limit(limit);
+      const total = await Contact.countDocuments();
+      return { status: 200, contacts, total };
+    }
     const contacts = await Contact.find();
     if (!contacts) {
       return { status: 404, message: 'Message' };
