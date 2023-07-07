@@ -96,7 +96,7 @@ const loginUser = async (body) => {
 };
 const logOutUser = async (body, req) => {
   try {
-    const verify = jwt.verify(req.headers.authorization, secret);
+    const verify = jwt.verify(req.headers.authorization.slice(7), secret);
     const id = verify.id;
     if (id) {
       const result = await User.findById(id);
@@ -114,7 +114,7 @@ const logOutUser = async (body, req) => {
 };
 const current = async (req) => {
   try {
-    const token = req.headers.authorization;
+    const token = req.headers.authorization.slice(7);
     const verify = jwt.verify(token, secret);
     if (!verify) {
       return { status: 401, message: 'Not authorized' };
