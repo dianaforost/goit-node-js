@@ -1,9 +1,7 @@
 const express = require('express');
 
 const router = express.Router();
-// const jwt = require('jsonwebtoken');
 const schemas = require('../../schemas/joi');
-// const { secret } = process.env;
 const models = require('../../controller/users');
 const { auth } = require('../../middleware/auth');
 
