@@ -5,10 +5,15 @@ const router = express.Router();
 const schemas = require('../../schemas/joi');
 
 const models = require('../../controller/contacts');
-router.get('/', async (req, res, next) => {
+const { auth } = require('../../middleware/auth');
+router.get('/', auth, async (req, res, next) => {
   try {
-    const contacts = JSON.parse(await models.listContacts());
-    console.log(contacts);
+    const contacts = await models.listContacts();
+    const isFavourite = req.query.favorite;
+    if (isFavourite === 'true') {
+      const result = await models.filterContacts(req);
+      return res.status(200).json(result.contacts);
+    }
     res.status(200).json(contacts);
   } catch (error) {
     console.error(error);
@@ -16,7 +21,7 @@ router.get('/', async (req, res, next) => {
   }
 });
 
-router.get('/:contactId', async (req, res, next) => {
+router.get('/:contactId', auth, async (req, res, next) => {
   try {
     const { contactId } = req.params;
     const contact = await models.getContactById(contactId);
@@ -32,7 +37,7 @@ router.get('/:contactId', async (req, res, next) => {
   }
 });
 
-router.post('/', async (req, res, next) => {
+router.post('/', auth, async (req, res, next) => {
   try {
     console.log(req);
     const { error } = schemas.contactPostSchema.validate(req.body);
@@ -50,7 +55,7 @@ router.post('/', async (req, res, next) => {
   }
 });
 
-router.delete('/:contactId', async (req, res, next) => {
+router.delete('/:contactId', auth, async (req, res, next) => {
   try {
     const { contactId } = req.params;
     const contacts = await models.removeContact(contactId);
@@ -66,7 +71,7 @@ router.delete('/:contactId', async (req, res, next) => {
   }
 });
 
-router.put('/:contactId', async (req, res, next) => {
+router.put('/:contactId', auth, async (req, res, next) => {
   try {
     const body = req.body;
     const { contactId } = req.params;
@@ -87,7 +92,7 @@ router.put('/:contactId', async (req, res, next) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
-router.patch('/:contactId/favorite', async (req, res, next) => {
+router.patch('/:contactId/favorite', auth, async (req, res, next) => {
   try {
     const body = req.body;
     const { contactId } = req.params;
