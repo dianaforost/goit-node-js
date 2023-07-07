@@ -25,15 +25,29 @@ const contactSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    owner: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
   },
   { versionKey: false }
 );
 
 const Contact = mongoose.model('Contact', contactSchema);
-const listContacts = async () => {
+
+const listContacts = async (page, limit) => {
   try {
+    if (page && limit) {
+      const skip = (page - 1) * limit;
+      const contacts = await Contact.find().skip(skip).limit(limit);
+      const total = await Contact.countDocuments();
+      return { status: 200, contacts, total };
+    }
     const contacts = await Contact.find();
-    return JSON.stringify(contacts);
+    if (!contacts) {
+      return { status: 404, message: 'Message' };
+    }
+    return { status: 200, contacts: contacts };
   } catch (error) {
     console.error(error);
   }
@@ -42,8 +56,6 @@ const getContactById = async (contactId) => {
   try {
     const result = await Contact.find();
     const contact = result.filter((c) => c.id === contactId);
-    console.log(contactId);
-    console.log(contact);
     return contact;
   } catch (e) {
     console.log(e);
@@ -55,7 +67,7 @@ const removeContact = async (contactId) => {
     const result = await Contact.find();
     const contacts = result.filter((c) => c.id !== contactId);
     const write = await Contact.deleteOne({ _id: contactId });
-    console.log(contacts, write);
+    console.log(write);
     return contacts;
   } catch (e) {
     console.log(e);
@@ -65,7 +77,6 @@ const removeContact = async (contactId) => {
 const addContact = async (body) => {
   try {
     const { name, email, phone, favorite } = body;
-    console.log(name, email, phone);
     if (name && email && phone) {
       const result = await Contact.find();
       const newContact = {
@@ -75,7 +86,6 @@ const addContact = async (body) => {
         phone,
         favorite,
       };
-      console.log(JSON.stringify(result));
       const write = await Contact.create(newContact);
       console.log(write);
       result.push(newContact);
@@ -148,6 +158,21 @@ const updateStatusContact = async (contactId, body) => {
     console.log(e);
   }
 };
+const filterContacts = async (req) => {
+  try {
+    const { favorite } = req.query;
+    const query = {};
+    if (favorite && favorite.toLowerCase() === 'true') {
+      query.favorite = true;
+    } else {
+      return { status: 401, message: 'Error' };
+    }
+    const contacts = await Contact.find(query);
+    return { status: 200, contacts: contacts };
+  } catch (e) {
+    console.log(e);
+  }
+};
 module.exports = {
   listContacts,
   getContactById,
@@ -155,5 +180,6 @@ module.exports = {
   addContact,
   updateContact,
   updateStatusContact,
+  filterContacts,
   Contact,
 };
