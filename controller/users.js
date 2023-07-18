@@ -4,6 +4,13 @@ require('dotenv').config();
 const { DB_HOST, secret } = process.env;
 const bcryptjs = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const gravatar = require('gravatar');
+const path = require('path');
+const uploadDir = path.join(process.cwd(), 'tmp');
+const storeImage = path.join(process.cwd(), 'public/avatars');
+const fs = require('fs').promises;
+const jimp = require('jimp');
+const fetch = require('node-fetch');
 mongoose
   .connect(DB_HOST)
   .then(() => console.log('Database connection successful'))
@@ -21,6 +28,7 @@ const usersSchema = new mongoose.Schema({
     required: [true, 'Email is required'],
     unique: true,
   },
+  avatarURL: String,
   subscription: {
     type: String,
     enum: ['starter', 'pro', 'business'],
@@ -37,11 +45,11 @@ usersSchema.methods.validPassword = function (password) {
   return isPasswordValid;
 };
 const User = mongoose.model('User', usersSchema);
-
 const registerUser = async (body) => {
   try {
     const { email, password } = body;
     if (email && password) {
+      const avatarURL = gravatar.url(email, { s: '100', r: 'x' }, true);
       const result = await User.findOne({ email });
       if (result) {
         return { status: 409, message: 'Email in use' };
@@ -49,8 +57,14 @@ const registerUser = async (body) => {
       const newUser = new User({
         _id: new Types.ObjectId(),
         email,
+        avatarURL,
       });
       newUser.setPassword(password);
+      const avatarFileName = `${email}.png`;
+      const response = await fetch(avatarURL);
+      const buffer = await response.buffer();
+      const filePath = path.join(uploadDir, avatarFileName);
+      fs.writeFile(filePath, buffer);
       await newUser.save();
       const write = await User.create(newUser);
       const writes = await newUser.save();
@@ -138,6 +152,36 @@ const patchSubscription = async (req) => {
   result.subscription = subscription;
   return { status: 200, result: result };
 };
+const uploadImage = async (req) => {
+  try {
+    const token = req.headers.authorization.slice(7);
+    const verify = jwt.verify(token, secret);
+
+    const user = await User.findById(verify.id);
+    if (!user) {
+      throw new Error('Пользователь не найден');
+    }
+
+    const avatarPath = path.join(uploadDir, `${verify.email}.png`);
+    if (!avatarPath) {
+      return { status: 404, message: 'Sorry' };
+    }
+    const image = await jimp.read(avatarPath);
+    image.cover(250, 250);
+
+    const processedAvatarPath = path.join(storeImage, `${verify.email}.png`);
+    await image.writeAsync(processedAvatarPath);
+
+    fs.unlink(avatarPath);
+
+    const avatarURL = `/avatars/${verify.email}.png`;
+    user.avatarURL = avatarURL;
+    return { status: 200, avatarURL: avatarURL };
+  } catch (error) {
+    console.error('Помилка при обробці аватарки:', error);
+    return { status: 500, avatarURL: 'sORRY' };
+  }
+};
 module.exports = {
   User,
   registerUser,
@@ -145,4 +189,5 @@ module.exports = {
   logOutUser,
   current,
   patchSubscription,
+  uploadImage,
 };

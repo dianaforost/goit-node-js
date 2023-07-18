@@ -4,8 +4,27 @@ const router = express.Router();
 const schemas = require('../../schemas/joi');
 const models = require('../../controller/users');
 const { auth } = require('../../middleware/auth');
+const path = require('path');
+const uploadDir = path.join(process.cwd(), 'tmp');
+const multer = require('multer');
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    console.log(uploadDir);
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    console.log(file.originalname);
+    cb(null, file.originalname);
+  },
+  limits: {
+    fileSize: 1048576,
+  },
+});
+const upload = multer({
+  storage: storage,
+});
 
-router.post('/register', async (req, res, next) => {
+router.post('/register', upload.single('avatarURL'), async (req, res, next) => {
   try {
     const { error } = schemas.userSchema.validate(req.body);
     if (error) {
@@ -13,6 +32,7 @@ router.post('/register', async (req, res, next) => {
     }
     const body = req.body;
     const result = await models.registerUser(body);
+    console.log(result);
 
     res
       .status(result.status)
@@ -95,4 +115,19 @@ router.patch('/', auth, async (req, res, next) => {
     console.log(e);
   }
 });
+router.patch(
+  '/avatars',
+  upload.single('picture'),
+  auth,
+  async (req, res, next) => {
+    const result = await models.uploadImage(req);
+    console.log(result);
+    try {
+      res.status(result.status).json({ avatarURL: result.avatarURL });
+    } catch (e) {
+      console.log(e);
+      res.status(500).json({ message: 'Internal Server Error' });
+    }
+  }
+);
 module.exports = router;
