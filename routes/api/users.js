@@ -130,4 +130,15 @@ router.patch(
     }
   }
 );
+router.get('/verify/:verificationToken', async (req, res) => {
+  const { verificationToken } = req.params;
+  const result = await models.verify(verificationToken);
+
+  try {
+    res.status(result.status).json({ message: result.message });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
 module.exports = router;

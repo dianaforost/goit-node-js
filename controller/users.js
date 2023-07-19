@@ -35,6 +35,14 @@ const usersSchema = new mongoose.Schema({
     default: 'starter',
   },
   token: String,
+  verify: {
+    type: Boolean,
+    default: false,
+  },
+  verificationToken: {
+    type: String,
+    required: [true, 'Verify token is required'],
+  },
 });
 usersSchema.methods.setPassword = function (password) {
   this.password = bcryptjs.hashSync(password, bcryptjs.genSaltSync(10));
@@ -182,6 +190,21 @@ const uploadImage = async (req) => {
     return { status: 500, avatarURL: 'sORRY' };
   }
 };
+const verify = async (verificationToken) => {
+  try {
+    const user = await User.findOne({ verificationToken });
+    if (!user) {
+      return { status: 404, message: 'User not found' };
+    }
+    user.verificationToken = null;
+    user.verify = true;
+    await user.save();
+    return { status: 200, message: 'Verification successful' };
+  } catch (e) {
+    console.log(e);
+    return { status: 500, message: 'Internal Server Error' };
+  }
+};
 module.exports = {
   User,
   registerUser,
@@ -190,4 +213,5 @@ module.exports = {
   current,
   patchSubscription,
   uploadImage,
+  verify,
 };
