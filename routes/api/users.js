@@ -141,4 +141,18 @@ router.get('/verify/:verificationToken', async (req, res) => {
     res.status(500).json({ message: 'Internal Server Error' });
   }
 });
+router.post('/verify', async (req, res) => {
+  const { error } = schemas.userSchema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ message: error.details[0].message });
+  }
+  const result = await models.resendingEmail(req.body);
+
+  try {
+    res.status(result.status).json({ message: result.message });
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+});
 module.exports = router;

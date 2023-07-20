@@ -92,13 +92,10 @@ const registerUser = async (body) => {
         from: 'dianaforost@meta.ua',
         to: email,
         subject: 'Verify Your Email',
-        text: `Click on the following link to verify your email: http://localhost:3000/users/verify/${verificationToken}`,
+        html: `<p>Hello ${email}!</p><a target='blank' href='http://localhost:3000/users/verify/${verificationToken}'>Click to verify your email</a>`,
       };
       await sender.transporter.sendMail(emailOptions);
-      // transporter
-      //   .sendMail(emailOptions)
-      //   .then((info) => console.log(info))
-      //   .catch((err) => console.log(err));
+
       return { status: 201, user: { email: email, password: password } };
     } else {
       return { status: 400, message: 'missing required name field' };
@@ -238,6 +235,30 @@ const verifyUser = async (verificationToken) => {
     return { status: 500, message: 'Internal Server Error' };
   }
 };
+const resendingEmail = async (body) => {
+  try {
+    const { email } = body;
+    if (!email) {
+      return { status: 400, message: 'missing required field email' };
+    }
+    const user = await User.findOne({ email });
+    if (!user.verify) {
+      const emailOptions = {
+        from: 'dianaforost@meta.ua',
+        to: email,
+        subject: 'Verify Your Email',
+        html: `<p>Hello ${user.email}!</p><a target='blank' href='http://localhost:3000/users/verify/${user.verificationToken}'>Click to verify your email</a>`,
+      };
+      await sender.transporter.sendMail(emailOptions);
+      return { status: 200, message: 'Verification email sent' };
+    } else {
+      return { status: 400, message: 'Verification has already been passed' };
+    }
+  } catch (e) {
+    console.log(e);
+    return { status: 500, message: 'Internal Server Error' };
+  }
+};
 module.exports = {
   User,
   registerUser,
@@ -247,4 +268,5 @@ module.exports = {
   patchSubscription,
   uploadImage,
   verifyUser,
+  resendingEmail,
 };
