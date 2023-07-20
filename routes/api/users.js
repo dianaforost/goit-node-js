@@ -132,7 +132,7 @@ router.patch(
 );
 router.get('/verify/:verificationToken', async (req, res) => {
   const { verificationToken } = req.params;
-  const result = await models.verify(verificationToken);
+  const result = await models.verifyUser(verificationToken);
 
   try {
     res.status(result.status).json({ message: result.message });

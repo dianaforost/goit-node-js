@@ -11,6 +11,8 @@ const storeImage = path.join(process.cwd(), 'public/avatars');
 const fs = require('fs').promises;
 const jimp = require('jimp');
 const fetch = require('node-fetch');
+const sender = require('../helper/index');
+const { v4: uuidv4 } = require('uuid');
 mongoose
   .connect(DB_HOST)
   .then(() => console.log('Database connection successful'))
@@ -41,7 +43,12 @@ const usersSchema = new mongoose.Schema({
   },
   verificationToken: {
     type: String,
-    required: [true, 'Verify token is required'],
+    required: [
+      function () {
+        return !this.verify;
+      },
+      'Verify token is required',
+    ],
   },
 });
 usersSchema.methods.setPassword = function (password) {
@@ -62,27 +69,43 @@ const registerUser = async (body) => {
       if (result) {
         return { status: 409, message: 'Email in use' };
       }
+      const verificationToken = uuidv4();
       const newUser = new User({
         _id: new Types.ObjectId(),
         email,
         avatarURL,
+        verificationToken: verificationToken,
       });
       newUser.setPassword(password);
+      const validationResult = await newUser.validate();
+      if (validationResult) {
+        const error = validationResult.errors.verificationToken;
+        return { status: 400, message: error.message };
+      }
       const avatarFileName = `${email}.png`;
       const response = await fetch(avatarURL);
       const buffer = await response.buffer();
       const filePath = path.join(uploadDir, avatarFileName);
       fs.writeFile(filePath, buffer);
       await newUser.save();
-      const write = await User.create(newUser);
-      const writes = await newUser.save();
-      console.log(write, writes);
+      const emailOptions = {
+        from: 'dianaforost@meta.ua',
+        to: email,
+        subject: 'Verify Your Email',
+        text: `Click on the following link to verify your email: http://localhost:3000/users/verify/${verificationToken}`,
+      };
+      await sender.transporter.sendMail(emailOptions);
+      // transporter
+      //   .sendMail(emailOptions)
+      //   .then((info) => console.log(info))
+      //   .catch((err) => console.log(err));
       return { status: 201, user: { email: email, password: password } };
     } else {
       return { status: 400, message: 'missing required name field' };
     }
   } catch (e) {
     console.log(e);
+    return { status: 500, message: 'Internal Server Error' };
   }
 };
 const loginUser = async (body) => {
@@ -93,6 +116,8 @@ const loginUser = async (body) => {
 
       if (!result.validPassword(password)) {
         return { status: 401, message: 'Email or password is wrong' };
+      } else if (!result.verify) {
+        return { status: 401, message: 'Your email is not verified' };
       } else {
         const payload = {
           id: result.id,
@@ -102,6 +127,7 @@ const loginUser = async (body) => {
         };
         const token = jwt.sign(payload, secret, { expiresIn: '1w' });
         result.token = token;
+        result.verificationToken = null;
         await result.save();
         return {
           status: 200,
@@ -114,6 +140,7 @@ const loginUser = async (body) => {
     }
   } catch (e) {
     console.log(e);
+    return { status: 500, message: 'Internal Server Error' };
   }
 };
 const logOutUser = async (body, req) => {
@@ -132,6 +159,7 @@ const logOutUser = async (body, req) => {
     }
   } catch (e) {
     console.log(e);
+    return { status: 500, message: 'Internal Server Error' };
   }
 };
 const current = async (req) => {
@@ -147,6 +175,7 @@ const current = async (req) => {
     };
   } catch (e) {
     console.log(e);
+    return { status: 500, message: 'Internal Server Error' };
   }
 };
 const patchSubscription = async (req) => {
@@ -190,14 +219,18 @@ const uploadImage = async (req) => {
     return { status: 500, avatarURL: 'sORRY' };
   }
 };
-const verify = async (verificationToken) => {
+const verifyUser = async (verificationToken) => {
   try {
-    const user = await User.findOne({ verificationToken });
+    const user = await User.findOne({ verificationToken: verificationToken });
+    console.log(verificationToken);
+    console.log(user);
     if (!user) {
       return { status: 404, message: 'User not found' };
     }
-    user.verificationToken = null;
-    user.verify = true;
+    await User.findByIdAndUpdate(user._id, {
+      verify: true,
+      verificationToken: null,
+    });
     await user.save();
     return { status: 200, message: 'Verification successful' };
   } catch (e) {
@@ -213,5 +246,5 @@ module.exports = {
   current,
   patchSubscription,
   uploadImage,
-  verify,
+  verifyUser,
 };
