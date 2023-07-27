@@ -11,7 +11,7 @@ const storeImage = path.join(process.cwd(), 'public/avatars');
 const fs = require('fs').promises;
 const jimp = require('jimp');
 const fetch = require('node-fetch');
-const sender = require('../helper/index');
+const sender = require('../services/email');
 const { v4: uuidv4 } = require('uuid');
 mongoose
   .connect(DB_HOST)
