@@ -62,7 +62,7 @@ usersSchema.methods.validPassword = function (password) {
 const User = mongoose.model('User', usersSchema);
 const registerUser = async (body) => {
   try {
-    const { email, password } = body;
+    const { name, email, password } = body;
     if (email && password) {
       const avatarURL = gravatar.url(email, { s: '100', r: 'x' }, true);
       const result = await User.findOne({ email });
@@ -72,6 +72,7 @@ const registerUser = async (body) => {
       const verificationToken = uuidv4();
       const newUser = new User({
         _id: new Types.ObjectId(),
+        name,
         email,
         avatarURL,
         verificationToken: verificationToken,
