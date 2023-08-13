@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const { Types } = require('mongoose');
 require('dotenv').config();
-const { secret } = process.env;
+// const { secret } = process.env;
 const bcryptjs = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const gravatar = require('gravatar');
@@ -124,7 +124,7 @@ const loginUser = async (body) => {
           password: result.password,
           subscription: result.subscription,
         };
-        const token = jwt.sign(payload, secret, { expiresIn: '1w' });
+        const token = jwt.sign(payload, 'Nodejs', { expiresIn: '1w' });
         result.token = token;
         result.verificationToken = null;
         await result.save();
@@ -144,7 +144,7 @@ const loginUser = async (body) => {
 };
 const logOutUser = async (body, req) => {
   try {
-    const verify = jwt.verify(req.headers.authorization.slice(7), secret);
+    const verify = jwt.verify(req.headers.authorization.slice(7), 'Nodejs');
     const id = verify.id;
     if (id) {
       const result = await User.findById(id);
@@ -164,7 +164,7 @@ const logOutUser = async (body, req) => {
 const current = async (req) => {
   try {
     const token = req.headers.authorization.slice(7);
-    const verify = jwt.verify(token, secret);
+    const verify = jwt.verify(token, 'Nodejs');
     if (!verify) {
       return { status: 401, message: 'Not authorized' };
     }
@@ -191,7 +191,7 @@ const patchSubscription = async (req) => {
 const uploadImage = async (req) => {
   try {
     const token = req.headers.authorization.slice(7);
-    const verify = jwt.verify(token, secret);
+    const verify = jwt.verify(token, 'Nodejs');
 
     const user = await User.findById(verify.id);
     if (!user) {
