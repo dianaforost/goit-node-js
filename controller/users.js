@@ -115,8 +115,8 @@ const loginUser = async (body) => {
 
       if (!result.validPassword(password)) {
         return { status: 401, message: 'Email or password is wrong' };
-      } else if (!result.verify) {
-        return { status: 401, message: 'Your email is not verified' };
+        // } else if (!result.verify) {
+        //   return { status: 401, message: 'Your email is not verified' };
       } else {
         const payload = {
           id: result.id,
