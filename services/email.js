@@ -8,7 +8,7 @@ const config = {
   secure: true,
   auth: {
     user: 'dianaforost@meta.ua',
-    pass: process.env.PASSWORD,
+    pass: 'Chokolate2005',
   },
   tls: {
     rejectUnauthorized: false,
