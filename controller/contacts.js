@@ -1,9 +1,11 @@
 const mongoose = require('mongoose');
 const { Types } = require('mongoose');
 require('dotenv').config();
-const { DB_HOST } = process.env;
+// const { DB_HOST } = process.env;
 mongoose
-  .connect(DB_HOST)
+  .connect(
+    'mongodb+srv://dianaforost:Chokolate2005@cluster0.veict56.mongodb.net/db-contacts?retryWrites=true&w=majority'
+  )
   .then(() => console.log('Database connection successful'))
   .catch((error) => {
     console.error('Database connection error:', error);

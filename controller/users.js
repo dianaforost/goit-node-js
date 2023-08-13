@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const { Types } = require('mongoose');
 require('dotenv').config();
-const { DB_HOST, secret } = process.env;
+const { secret } = process.env;
 const bcryptjs = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const gravatar = require('gravatar');
@@ -14,7 +14,9 @@ const fetch = require('node-fetch');
 const sender = require('../services/email');
 const { v4: uuidv4 } = require('uuid');
 mongoose
-  .connect(DB_HOST)
+  .connect(
+    'mongodb+srv://dianaforost:Chokolate2005@cluster0.veict56.mongodb.net/db-contacts?retryWrites=true&w=majority'
+  )
   .then(() => console.log('Database connection successful'))
   .catch((error) => {
     console.error('Database connection error:', error);
