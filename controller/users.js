@@ -90,13 +90,13 @@ const registerUser = async (body) => {
       const filePath = path.join(uploadDir, avatarFileName);
       fs.writeFile(filePath, buffer);
       await newUser.save();
-      const emailOptions = {
-        from: 'dianaforost@meta.ua',
-        to: email,
-        subject: 'Verify Your Email',
-        html: `<p>Hello ${email}!</p><a target='blank' href='http://localhost:3000/users/verify/${verificationToken}'>Click to verify your email</a>`,
-      };
-      await sender.transporter.sendMail(emailOptions);
+      // const emailOptions = {
+      //   from: 'dianaforost@meta.ua',
+      //   to: email,
+      //   subject: 'Verify Your Email',
+      //   html: `<p>Hello ${email}!</p><a target='blank' href='http://localhost:3000/users/verify/${verificationToken}'>Click to verify your email</a>`,
+      // };
+      // await sender.transporter.sendMail(emailOptions);
 
       return { status: 201, user: { email: email, password: password } };
     } else {
