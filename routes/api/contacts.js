@@ -8,7 +8,7 @@ const models = require('../../controller/contacts');
 const { auth } = require('../../middleware/auth');
 router.get('/', auth, async (req, res, next) => {
   try {
-    const { page = 1, limit = 5 } = req.query;
+    const { page = 2, limit = 5 } = req.query;
     if (page && limit) {
       const result = await models.listContacts(Number(page), Number(limit));
       return res
