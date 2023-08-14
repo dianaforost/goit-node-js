@@ -33,7 +33,6 @@ router.get('/:contactId', auth, async (req, res, next) => {
     const { contactId } = req.params;
     const contact = await models.getContactById(contactId);
     if (contact) {
-      console.log(contact);
       res.status(200).json(contact);
     } else {
       res.status(404).json({ message: 'Not found' });
@@ -46,13 +45,11 @@ router.get('/:contactId', auth, async (req, res, next) => {
 
 router.post('/', auth, async (req, res, next) => {
   try {
-    console.log(req);
     const { error } = schemas.contactPostSchema.validate(req.body);
     if (error) {
       return res.status(400).json({ message: error.details[0].message });
     }
     const body = req.body;
-    console.log(req.body);
     const result = await models.addContact(body);
 
     res.status(result.status).json(result.result);
