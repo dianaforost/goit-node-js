@@ -124,7 +124,7 @@ const loginUser = async (body) => {
           password: result.password,
           subscription: result.subscription,
         };
-        const token = jwt.sign(payload, 'Nodejs', { expiresIn: '1w' });
+        const token = jwt.sign(payload, 'Nodejs', { expiresIn: '2m' });
         result.token = token;
         result.verificationToken = null;
         await result.save();
