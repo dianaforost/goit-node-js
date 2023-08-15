@@ -15,7 +15,7 @@ router.get('/', auth, async (req, res, next) => {
         owner: req.user._id,
       });
       return res.status(200).json({
-        contacts: result.contacts,
+        contacts: result.contact,
         total: result.total,
         page: page,
       });
@@ -26,7 +26,7 @@ router.get('/', auth, async (req, res, next) => {
     const isFavourite = req.query.favorite;
     if (isFavourite === 'true') {
       const result = await models.filterContacts(req);
-      return res.status(200).json(result.contacts);
+      return res.status(200).json(result.contact);
     }
     res.status(200).json(contacts);
   } catch (error) {
