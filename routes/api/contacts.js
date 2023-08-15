@@ -16,9 +16,15 @@ router.get('/', auth, async (req, res, next) => {
       });
       return res
         .status(200)
-        .json({ contacts: result.contacts, total: result.total, page: page });
+        .json({
+          contacts: result.contacts || result.contact,
+          total: result.total,
+          page: page,
+        });
     }
-    const contacts = await models.listContacts();
+    const contacts = await models.listContacts({
+      owner: verify.id,
+    });
     const isFavourite = req.query.favorite;
     if (isFavourite === 'true') {
       const result = await models.filterContacts(req);
