@@ -61,20 +61,13 @@ router.post('/', auth, async (req, res, next) => {
 
 router.delete('/:contactId', auth, async (req, res, next) => {
   try {
-    const { page, limit = 5 } = req.query;
-    if (page && limit) {
-      const { contactId } = req.params;
-      const contacts = await models.removeContact(
-        contactId,
-        Number(page),
-        Number(limit)
-      );
-      if (contactId) {
-        res.status(200).json({ message: 'contact deleted' });
-        console.log(contacts);
-      } else {
-        res.status(404).json({ message: 'Not found' });
-      }
+    const { contactId } = req.params;
+    const contacts = await models.removeContact(contactId);
+    if (contactId) {
+      res.status(200).json({ message: 'contact deleted' });
+      console.log(contacts);
+    } else {
+      res.status(404).json({ message: 'Not found' });
     }
   } catch (e) {
     console.log(e);
