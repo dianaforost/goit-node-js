@@ -63,17 +63,13 @@ const getContactById = async (contactId) => {
   }
 };
 
-const removeContact = async (contactId, page, limit) => {
+const removeContact = async (contactId) => {
   try {
+    const result = await Contact.find();
+    const contacts = result.filter((c) => c.id !== contactId);
     const write = await Contact.deleteOne({ _id: contactId });
-    if (write.ok) {
-      const skip = (page - 1) * limit;
-      const contacts = await Contact.find().skip(skip).limit(limit);
-      const total = await Contact.countDocuments();
-      return { status: 200, contacts, total };
-    } else {
-      throw new Error('Failed to delete contact');
-    }
+    console.log(write);
+    return contacts;
   } catch (e) {
     console.log(e);
   }
