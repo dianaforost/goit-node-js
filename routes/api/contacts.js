@@ -4,15 +4,15 @@ const router = express.Router();
 
 const schemas = require('../../schemas/joi');
 const models = require('../../controller/contacts');
-const jwt = require('jsonwebtoken');
+// const jwt = require('jsonwebtoken');
 const { auth } = require('../../middleware/auth');
 router.get('/', auth, async (req, res, next) => {
   try {
     const { page, limit = 5 } = req.query;
-    const verify = jwt.verify(req.headers.authorization.slice(7), 'Nodejs');
+    // const verify = jwt.verify(req.headers.authorization.slice(7), 'Nodejs');
     if (page && limit) {
       const result = await models.listContacts(Number(page), Number(limit), {
-        owner: verify.id,
+        owner: req.user._id,
       });
       return res.status(200).json({
         contacts: result.contacts,
@@ -21,7 +21,7 @@ router.get('/', auth, async (req, res, next) => {
       });
     }
     const contacts = await models.listContacts({
-      owner: verify.id,
+      owner: req.user._id,
     });
     const isFavourite = req.query.favorite;
     if (isFavourite === 'true') {
