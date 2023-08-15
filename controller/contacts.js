@@ -45,7 +45,7 @@ const listContacts = async (page, limit, owner) => {
       const contacts = await Contact.find().skip(skip).limit(limit);
       const contact = contacts.filter((c) => c.owner !== owner);
       const total = await Contact.countDocuments();
-      return { status: 200, contact, total };
+      return { status: 200, contacts: contact, total };
     }
     const contacts = await Contact.find();
     const contact = contacts.filter((c) => c.owner !== owner);

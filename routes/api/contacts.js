@@ -14,13 +14,11 @@ router.get('/', auth, async (req, res, next) => {
       const result = await models.listContacts(Number(page), Number(limit), {
         owner: verify.id,
       });
-      return res
-        .status(200)
-        .json({
-          contacts: result.contacts || result.contact,
-          total: result.total,
-          page: page,
-        });
+      return res.status(200).json({
+        contacts: result.contacts,
+        total: result.total,
+        page: page,
+      });
     }
     const contacts = await models.listContacts({
       owner: verify.id,
