@@ -3,14 +3,17 @@ const express = require('express');
 const router = express.Router();
 
 const schemas = require('../../schemas/joi');
-
 const models = require('../../controller/contacts');
+const jwt = require('jsonwebtoken');
 const { auth } = require('../../middleware/auth');
 router.get('/', auth, async (req, res, next) => {
   try {
     const { page, limit = 5 } = req.query;
+    const verify = jwt.verify(req.headers.authorization.slice(7), 'Nodejs');
     if (page && limit) {
-      const result = await models.listContacts(Number(page), Number(limit));
+      const result = await models.listContacts(Number(page), Number(limit), {
+        owner: verify.id,
+      });
       return res
         .status(200)
         .json({ contacts: result.contacts, total: result.total, page: page });
@@ -50,7 +53,7 @@ router.post('/', auth, async (req, res, next) => {
       return res.status(400).json({ message: error.details[0].message });
     }
     const body = req.body;
-    const result = await models.addContact(body);
+    const result = await models.addContact(body, { owner: req.user._id });
 
     res.status(result.status).json(result.result);
   } catch (e) {

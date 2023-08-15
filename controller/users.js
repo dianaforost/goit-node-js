@@ -7,6 +7,7 @@ const gravatar = require('gravatar');
 const path = require('path');
 const uploadDir = path.join(process.cwd(), 'tmp');
 const storeImage = path.join(process.cwd(), 'public/avatars');
+const handleMongooseError = require('../helpers/handleMongooseError');
 const fs = require('fs').promises;
 const jimp = require('jimp');
 const fetch = require('node-fetch');
@@ -21,37 +22,41 @@ mongoose
     console.error('Database connection error:', error);
     process.exit(1);
   });
-const usersSchema = new mongoose.Schema({
-  password: {
-    type: String,
-    required: [true, 'Set password for user'],
+const usersSchema = new mongoose.Schema(
+  {
+    password: {
+      type: String,
+      required: [true, 'Set password for user'],
+    },
+    email: {
+      type: String,
+      required: [true, 'Email is required'],
+      unique: true,
+    },
+    avatarURL: String,
+    subscription: {
+      type: String,
+      enum: ['starter', 'pro', 'business'],
+      default: 'starter',
+    },
+    token: String,
+    verify: {
+      type: Boolean,
+      default: false,
+    },
+    verificationToken: {
+      type: String,
+      required: [
+        function () {
+          return !this.verify;
+        },
+        'Verify token is required',
+      ],
+    },
   },
-  email: {
-    type: String,
-    required: [true, 'Email is required'],
-    unique: true,
-  },
-  avatarURL: String,
-  subscription: {
-    type: String,
-    enum: ['starter', 'pro', 'business'],
-    default: 'starter',
-  },
-  token: String,
-  verify: {
-    type: Boolean,
-    default: false,
-  },
-  verificationToken: {
-    type: String,
-    required: [
-      function () {
-        return !this.verify;
-      },
-      'Verify token is required',
-    ],
-  },
-});
+  { versionKey: false, timestamps: true }
+);
+usersSchema.post('save', handleMongooseError);
 usersSchema.methods.setPassword = function (password) {
   this.password = bcryptjs.hashSync(password, bcryptjs.genSaltSync(10));
 };
@@ -124,7 +129,7 @@ const loginUser = async (body) => {
           password: result.password,
           subscription: result.subscription,
         };
-        const token = jwt.sign(payload, 'Nodejs', { expiresIn: '2m' });
+        const token = jwt.sign(payload, 'Nodejs', { expiresIn: '1h' });
         result.token = token;
         result.verificationToken = null;
         await result.save();
@@ -221,8 +226,6 @@ const uploadImage = async (req) => {
 const verifyUser = async (verificationToken) => {
   try {
     const user = await User.findOne({ verificationToken: verificationToken });
-    console.log(verificationToken);
-    console.log(user);
     if (!user) {
       return { status: 404, message: 'User not found' };
     }

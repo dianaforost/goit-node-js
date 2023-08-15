@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { Types } = require('mongoose');
+const handleMongooseError = require('../helpers/handleMongooseError');
 require('dotenv').config();
 mongoose
   .connect(
@@ -32,24 +33,26 @@ const contactSchema = new mongoose.Schema(
       required: true,
     },
   },
-  { versionKey: false }
+  { versionKey: false, timestamps: true }
 );
-
+contactSchema.post('save', handleMongooseError);
 const Contact = mongoose.model('Contact', contactSchema);
 
-const listContacts = async (page, limit) => {
+const listContacts = async (page, limit, owner) => {
   try {
     if (page && limit) {
       const skip = (page - 1) * limit;
       const contacts = await Contact.find().skip(skip).limit(limit);
+      const contact = contacts.filter((c) => c.owner !== owner);
       const total = await Contact.countDocuments();
-      return { status: 200, contacts, total };
+      return { status: 200, contact, total };
     }
     const contacts = await Contact.find();
-    if (!contacts) {
+    const contact = contacts.filter((c) => c.owner !== owner);
+    if (!contact) {
       return { status: 404, message: 'Message' };
     }
-    return { status: 200, contacts: contacts };
+    return { status: 200, contacts: contact };
   } catch (error) {
     console.error(error);
   }
@@ -76,7 +79,7 @@ const removeContact = async (contactId) => {
   }
 };
 
-const addContact = async (body) => {
+const addContact = async (body, { owner }) => {
   try {
     const { name, email, phone, favorite } = body;
     if (name && email && phone) {
@@ -87,6 +90,7 @@ const addContact = async (body) => {
         email,
         phone,
         favorite,
+        owner,
       };
       const write = await Contact.create(newContact);
       console.log(write);
