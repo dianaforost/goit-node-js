@@ -57,7 +57,8 @@ router.post('/', auth, async (req, res, next) => {
       return res.status(400).json({ message: error.details[0].message });
     }
     const body = req.body;
-    const result = await models.addContact(body, { owner: req.user._id });
+    const owner = req.user._id;
+    const result = await models.addContact(body, owner);
 
     res.status(result.status).json(result.result);
   } catch (e) {
