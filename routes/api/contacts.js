@@ -1,7 +1,7 @@
 const express = require('express');
 
 const router = express.Router();
-
+const jwt = require('jsonwebtoken');
 const schemas = require('../../schemas/joi');
 const models = require('../../controller/contacts');
 // const jwt = require('jsonwebtoken');
@@ -9,12 +9,10 @@ const { auth } = require('../../middleware/auth');
 router.get('/', auth, async (req, res, next) => {
   try {
     const { page, limit = 5 } = req.query;
-    // const verify = jwt.verify(req.headers.authorization.slice(7), 'Nodejs');
-    console.log(req.user._id);
-    console.log(req.headers.authorization.slice(7));
+    const verify = jwt.verify(req.headers.authorization.slice(7), 'Nodejs');
     if (page && limit) {
       const result = await models.listContacts(Number(page), Number(limit), {
-        owner: req.user._id,
+        owner: verify.id,
       });
       return res.status(200).json({
         contacts: result.contact,
@@ -59,7 +57,8 @@ router.post('/', auth, async (req, res, next) => {
       return res.status(400).json({ message: error.details[0].message });
     }
     const body = req.body;
-    const result = await models.addContact(body, { owner: req.user._id });
+    const verify = jwt.verify(req.headers.authorization.slice(7), 'Nodejs');
+    const result = await models.addContact(body, { owner: verify.id });
 
     res.status(result.status).json(result.result);
   } catch (e) {
