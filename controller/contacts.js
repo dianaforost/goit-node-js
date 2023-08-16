@@ -42,10 +42,10 @@ const listContacts = async (page, limit, owner) => {
   try {
     if (page && limit) {
       const skip = (page - 1) * limit;
-      const contact = await Contact.find().skip(skip).limit(limit);
-      const contacts = contact.filter((c) => c.owner !== owner);
+      const contacts = await Contact.find({ owner: owner })
+        .skip(skip)
+        .limit(limit);
       const total = contacts.length;
-      console.log(contact);
       return { status: 200, contacts, total };
     }
     const contact = await Contact.find();
@@ -53,7 +53,6 @@ const listContacts = async (page, limit, owner) => {
     if (!contacts) {
       return { status: 404, message: 'Message' };
     }
-    console.log(contacts);
     return { status: 200, contacts };
   } catch (error) {
     console.error(error);

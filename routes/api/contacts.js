@@ -9,26 +9,24 @@ const { auth } = require('../../middleware/auth');
 router.get('/', auth, async (req, res, next) => {
   try {
     const { page, limit = 5 } = req.query;
-    // const verify = jwt.verify(req.headers.authorization.slice(7), 'Nodejs');
-    console.log(req.user._id);
-    console.log(req.headers.authorization.slice(7));
+    const owner = req.user._id;
     if (page && limit) {
-      const result = await models.listContacts(Number(page), Number(limit), {
-        owner: req.user._id,
-      });
+      const result = await models.listContacts(
+        Number(page),
+        Number(limit),
+        owner
+      );
       return res.status(200).json({
-        contacts: result.contact,
+        contacts: result.contacts,
         total: result.total,
         page: page,
       });
     }
-    const contacts = await models.listContacts({
-      owner: req.user._id,
-    });
+    const contacts = await models.listContacts(owner);
     const isFavourite = req.query.favorite;
     if (isFavourite === 'true') {
       const result = await models.filterContacts(req);
-      return res.status(200).json(result.contact);
+      return res.status(200).json(result.contacts);
     }
     res.status(200).json(contacts);
   } catch (error) {
