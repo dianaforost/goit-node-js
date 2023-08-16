@@ -84,7 +84,7 @@ const addContact = async (body, owner) => {
   try {
     const { name, email, phone, favorite } = body;
     if (name && email && phone) {
-      const result = await Contact.find();
+      const result = await Contact.find({ owner: owner });
       const newContact = {
         _id: new Types.ObjectId(),
         name,
