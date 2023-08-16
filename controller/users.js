@@ -1,56 +1,62 @@
 const mongoose = require('mongoose');
 const { Types } = require('mongoose');
 require('dotenv').config();
-const { DB_HOST, secret } = process.env;
 const bcryptjs = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const gravatar = require('gravatar');
 const path = require('path');
 const uploadDir = path.join(process.cwd(), 'tmp');
 const storeImage = path.join(process.cwd(), 'public/avatars');
+const handleMongooseError = require('../helpers/handleMongooseError');
 const fs = require('fs').promises;
 const jimp = require('jimp');
 const fetch = require('node-fetch');
 const sender = require('../services/email');
 const { v4: uuidv4 } = require('uuid');
 mongoose
-  .connect(DB_HOST)
+  .connect(
+    'mongodb+srv://dianaforost:Chokolate2005@cluster0.veict56.mongodb.net/db-contacts?retryWrites=true&w=majority'
+  )
   .then(() => console.log('Database connection successful'))
   .catch((error) => {
     console.error('Database connection error:', error);
     process.exit(1);
   });
-const usersSchema = new mongoose.Schema({
-  password: {
-    type: String,
-    required: [true, 'Set password for user'],
+const usersSchema = new mongoose.Schema(
+  {
+    password: {
+      type: String,
+      required: [true, 'Set password for user'],
+    },
+    email: {
+      type: String,
+      required: [true, 'Email is required'],
+      unique: true,
+    },
+    avatarURL: String,
+    subscription: {
+      type: String,
+      enum: ['starter', 'pro', 'business'],
+      default: 'starter',
+    },
+    token: String,
+    verify: {
+      type: Boolean,
+      default: false,
+    },
+    verificationToken: {
+      type: String,
+      required: [
+        function () {
+          return !this.verify;
+        },
+        'Verify token is required',
+      ],
+    },
   },
-  email: {
-    type: String,
-    required: [true, 'Email is required'],
-    unique: true,
-  },
-  avatarURL: String,
-  subscription: {
-    type: String,
-    enum: ['starter', 'pro', 'business'],
-    default: 'starter',
-  },
-  token: String,
-  verify: {
-    type: Boolean,
-    default: false,
-  },
-  verificationToken: {
-    type: String,
-    required: [
-      function () {
-        return !this.verify;
-      },
-      'Verify token is required',
-    ],
-  },
-});
+  { versionKey: false, timestamps: true }
+);
+usersSchema.post('save', handleMongooseError);
 usersSchema.methods.setPassword = function (password) {
   this.password = bcryptjs.hashSync(password, bcryptjs.genSaltSync(10));
 };
@@ -62,7 +68,7 @@ usersSchema.methods.validPassword = function (password) {
 const User = mongoose.model('User', usersSchema);
 const registerUser = async (body) => {
   try {
-    const { email, password } = body;
+    const { name, email, password } = body;
     if (email && password) {
       const avatarURL = gravatar.url(email, { s: '100', r: 'x' }, true);
       const result = await User.findOne({ email });
@@ -72,6 +78,7 @@ const registerUser = async (body) => {
       const verificationToken = uuidv4();
       const newUser = new User({
         _id: new Types.ObjectId(),
+        name,
         email,
         avatarURL,
         verificationToken: verificationToken,
@@ -88,13 +95,13 @@ const registerUser = async (body) => {
       const filePath = path.join(uploadDir, avatarFileName);
       fs.writeFile(filePath, buffer);
       await newUser.save();
-      const emailOptions = {
-        from: 'dianaforost@meta.ua',
-        to: email,
-        subject: 'Verify Your Email',
-        html: `<p>Hello ${email}!</p><a target='blank' href='http://localhost:3000/users/verify/${verificationToken}'>Click to verify your email</a>`,
-      };
-      await sender.transporter.sendMail(emailOptions);
+      // const emailOptions = {
+      //   from: 'dianaforost@meta.ua',
+      //   to: email,
+      //   subject: 'Verify Your Email',
+      //   html: `<p>Hello ${email}!</p><a target='blank' href='http://localhost:3000/users/verify/${verificationToken}'>Click to verify your email</a>`,
+      // };
+      // await sender.transporter.sendMail(emailOptions);
 
       return { status: 201, user: { email: email, password: password } };
     } else {
@@ -122,7 +129,7 @@ const loginUser = async (body) => {
           password: result.password,
           subscription: result.subscription,
         };
-        const token = jwt.sign(payload, secret, { expiresIn: '1w' });
+        const token = jwt.sign(payload, 'Nodejs', { expiresIn: '1h' });
         result.token = token;
         result.verificationToken = null;
         await result.save();
@@ -142,7 +149,7 @@ const loginUser = async (body) => {
 };
 const logOutUser = async (body, req) => {
   try {
-    const verify = jwt.verify(req.headers.authorization.slice(7), secret);
+    const verify = jwt.verify(req.headers.authorization.slice(7), 'Nodejs');
     const id = verify.id;
     if (id) {
       const result = await User.findById(id);
@@ -162,7 +169,7 @@ const logOutUser = async (body, req) => {
 const current = async (req) => {
   try {
     const token = req.headers.authorization.slice(7);
-    const verify = jwt.verify(token, secret);
+    const verify = jwt.verify(token, 'Nodejs');
     if (!verify) {
       return { status: 401, message: 'Not authorized' };
     }
@@ -189,7 +196,7 @@ const patchSubscription = async (req) => {
 const uploadImage = async (req) => {
   try {
     const token = req.headers.authorization.slice(7);
-    const verify = jwt.verify(token, secret);
+    const verify = jwt.verify(token, 'Nodejs');
 
     const user = await User.findById(verify.id);
     if (!user) {
@@ -219,8 +226,6 @@ const uploadImage = async (req) => {
 const verifyUser = async (verificationToken) => {
   try {
     const user = await User.findOne({ verificationToken: verificationToken });
-    console.log(verificationToken);
-    console.log(user);
     if (!user) {
       return { status: 404, message: 'User not found' };
     }

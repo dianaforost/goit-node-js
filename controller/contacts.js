@@ -1,9 +1,11 @@
 const mongoose = require('mongoose');
 const { Types } = require('mongoose');
+const handleMongooseError = require('../helpers/handleMongooseError');
 require('dotenv').config();
-const { DB_HOST } = process.env;
 mongoose
-  .connect(DB_HOST)
+  .connect(
+    'mongodb+srv://dianaforost:Chokolate2005@cluster0.veict56.mongodb.net/db-contacts?retryWrites=true&w=majority'
+  )
   .then(() => console.log('Database connection successful'))
   .catch((error) => {
     console.error('Database connection error:', error);
@@ -28,26 +30,31 @@ const contactSchema = new mongoose.Schema(
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
+      required: true,
     },
   },
-  { versionKey: false }
+  { versionKey: false, timestamps: true }
 );
-
+contactSchema.post('save', handleMongooseError);
 const Contact = mongoose.model('Contact', contactSchema);
 
-const listContacts = async (page, limit) => {
+const listContacts = async (page, limit, owner) => {
   try {
     if (page && limit) {
       const skip = (page - 1) * limit;
-      const contacts = await Contact.find().skip(skip).limit(limit);
-      const total = await Contact.countDocuments();
+      const contacts = await Contact.find({ owner: owner })
+        .skip(skip)
+        .limit(limit);
+      const contactsByOwner = Contact.find({ owner: owner });
+      const total = (await contactsByOwner).length;
       return { status: 200, contacts, total };
     }
-    const contacts = await Contact.find();
+    const contact = await Contact.find();
+    const contacts = contact.filter((c) => c.owner !== owner);
     if (!contacts) {
       return { status: 404, message: 'Message' };
     }
-    return { status: 200, contacts: contacts };
+    return { status: 200, contacts };
   } catch (error) {
     console.error(error);
   }
@@ -74,17 +81,18 @@ const removeContact = async (contactId) => {
   }
 };
 
-const addContact = async (body) => {
+const addContact = async (body, owner) => {
   try {
     const { name, email, phone, favorite } = body;
     if (name && email && phone) {
-      const result = await Contact.find();
+      const result = await Contact.find({ owner: owner });
       const newContact = {
         _id: new Types.ObjectId(),
         name,
         email,
         phone,
         favorite,
+        owner,
       };
       const write = await Contact.create(newContact);
       console.log(write);

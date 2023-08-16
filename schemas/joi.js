@@ -15,6 +15,7 @@ const contactPatchSchema = Joi.object({
   favorite: Joi.boolean().required(),
 });
 const userSchema = Joi.object({
+  name: Joi.string(),
   email: Joi.string().email(),
   password: Joi.string(),
 });

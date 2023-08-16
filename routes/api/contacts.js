@@ -3,19 +3,26 @@ const express = require('express');
 const router = express.Router();
 
 const schemas = require('../../schemas/joi');
-
 const models = require('../../controller/contacts');
+// const jwt = require('jsonwebtoken');
 const { auth } = require('../../middleware/auth');
 router.get('/', auth, async (req, res, next) => {
   try {
-    const { page = 1, limit = 20 } = req.query;
+    const { page, limit = 5 } = req.query;
+    const owner = req.user._id;
     if (page && limit) {
-      const result = await models.listContacts(Number(page), Number(limit));
-      return res
-        .status(200)
-        .json({ contacts: result.contacts, total: result.total });
+      const result = await models.listContacts(
+        Number(page),
+        Number(limit),
+        owner
+      );
+      return res.status(200).json({
+        contacts: result.contacts,
+        total: result.total,
+        page: page,
+      });
     }
-    const contacts = await models.listContacts();
+    const contacts = await models.listContacts(owner);
     const isFavourite = req.query.favorite;
     if (isFavourite === 'true') {
       const result = await models.filterContacts(req);
@@ -33,7 +40,6 @@ router.get('/:contactId', auth, async (req, res, next) => {
     const { contactId } = req.params;
     const contact = await models.getContactById(contactId);
     if (contact) {
-      console.log(contact);
       res.status(200).json(contact);
     } else {
       res.status(404).json({ message: 'Not found' });
@@ -46,14 +52,13 @@ router.get('/:contactId', auth, async (req, res, next) => {
 
 router.post('/', auth, async (req, res, next) => {
   try {
-    console.log(req);
     const { error } = schemas.contactPostSchema.validate(req.body);
     if (error) {
       return res.status(400).json({ message: error.details[0].message });
     }
     const body = req.body;
-    console.log(req.body);
-    const result = await models.addContact(body);
+    const owner = req.user._id;
+    const result = await models.addContact(body, owner);
 
     res.status(result.status).json(result.result);
   } catch (e) {

@@ -1,5 +1,4 @@
 const jwt = require('jsonwebtoken');
-const { secret } = process.env;
 const models = require('../controller/users');
 const auth = async (req, res, next) => {
   try {
@@ -9,7 +8,7 @@ const auth = async (req, res, next) => {
     if (!token || !token.startsWith('Bearer ')) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
-    const decodedToken = jwt.verify(tok, secret);
+    const decodedToken = jwt.verify(tok, 'Nodejs');
 
     if (!decodedToken || !decodedToken.id) {
       return res.status(401).json({ error: 'Unauthorized' });
