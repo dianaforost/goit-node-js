@@ -10,6 +10,8 @@ router.get('/', auth, async (req, res, next) => {
   try {
     const { page, limit = 5 } = req.query;
     // const verify = jwt.verify(req.headers.authorization.slice(7), 'Nodejs');
+    console.log(req.user._id);
+    console.log(req.headers.authorization.slice(7));
     if (page && limit) {
       const result = await models.listContacts(Number(page), Number(limit), {
         owner: req.user._id,
