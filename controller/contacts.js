@@ -80,7 +80,7 @@ const removeContact = async (contactId) => {
   }
 };
 
-const addContact = async (body, { owner }) => {
+const addContact = async (body, owner) => {
   try {
     const { name, email, phone, favorite } = body;
     if (name && email && phone) {
