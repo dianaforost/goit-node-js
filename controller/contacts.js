@@ -38,7 +38,7 @@ const contactSchema = new mongoose.Schema(
 contactSchema.post('save', handleMongooseError);
 const Contact = mongoose.model('Contact', contactSchema);
 
-const listContacts = async (page, limit, { owner }) => {
+const listContacts = async (page, limit, owner) => {
   try {
     if (page && limit) {
       const skip = (page - 1) * limit;
